@@ -11,8 +11,10 @@
 (require 'elnode)
 (require 'htmlize)
 
-(defvar el-sprunge-servername "localhost"
-  "Name of the server.")
+(defcustom el-sprunge-servername "localhost"
+  "Name of the server."
+  :group 'el-sprunge
+  :type 'string)
 
 (defvar el-sprunge-docroot
   (expand-file-name "scraps" elnode-config-directory)
@@ -25,8 +27,16 @@ If any function in this hook returns nil then the edit is aborted.")
 (defvar el-sprunge-after-save-hook nil
   "Hook run in a file buffer after saving web edits.")
 
-(defvar el-sprunge-usage
-  (format "NAME
+(defun el-sprunge-handler (httpcon)
+  (elnode-log-access "el-sprunge" httpcon)
+  (elnode-method httpcon
+    (GET  (el-sprunge-file-handler httpcon))
+    (POST (el-sprunge-post-handler httpcon))))
+
+(defun el-sprunge-send-usage ()
+  (elnode-http-start httpcon "200" '("Content-type" . "text/plain"))
+  (elnode-http-return httpcon
+                      (format "NAME
     el-sprunge: sprunge-style paste server
 
 SYNOPSIS
@@ -37,25 +47,14 @@ DESCRIPTION
     Server re-implemented in Emacs.
 
 EXAMPLES
-    ~$ cat bin/ching | curl -F 'sprunge=<-' http://%s/pb
-       http://%s/42
-    ~$ firefox http://%s/42
+    ~$ cat bin/ching | curl -F 'sprunge=<-' %s
+       http://%s/a9e4e6
+    ~$ firefox http://%s/a9e4e6
 "
-          el-sprunge-servername
-          el-sprunge-servername
-          el-sprunge-servername
-          el-sprunge-servername)
-  "Usage string to send for empty requests.")
-
-(defun el-sprunge-handler (httpcon)
-  (elnode-log-access "el-sprunge" httpcon)
-  (elnode-method httpcon
-    (GET  (el-sprunge-file-handler httpcon))
-    (POST (el-sprunge-post-handler httpcon))))
-
-(defun el-sprunge-send-usage ()
-  (elnode-http-start httpcon "200" '("Content-type" . "text/plain"))
-  (elnode-http-return httpcon el-sprunge-usage))
+                              el-sprunge-servername
+                              el-sprunge-servername
+                              el-sprunge-servername
+                              el-sprunge-servername)))
 
 (defun el-sprunge-file-handler (httpcon)
   (let ((elnode-docroot-for-no-404 t) (elnode-docroot-for-no-cache t))
@@ -83,8 +82,7 @@ EXAMPLES
       (setq path (el-sprunge-fontify path as)))
     (cond
      ((string= file el-sprunge-docroot)
-      (elnode-http-start httpcon "200" '("Content-type" . "text/plain"))
-      (elnode-http-return httpcon el-sprunge-usage))
+      (el-sprunge-send-usage))
      ((file-exists-p path)
       (elnode-send-file httpcon path
        :mime-types
@@ -103,8 +101,7 @@ EXAMPLES
           (elnode-http-return
            httpcon
            (format "http://%s/%s\n" el-sprunge-servername hash)))
-      (elnode-http-start httpcon "200" '("Content-type" . "text/plain"))
-      (elnode-http-return httpcon el-sprunge-usage))))
+      (el-sprunge-send-usage))))
 
 (provide 'el-sprunge)
 ;;; el-sprunge.el ends here

@@ -1,5 +1,6 @@
 EMACS := emacs
 PORT ?= 9090
+SERVER ?= localhost
 
 # Set these environment variables so that they point to the
 # development directories of elnode.
@@ -48,6 +49,7 @@ package: $(PACKAGE).tar
 
 start: $(SRC)
 	$(filter-out --batch, $(BATCH_EMACS)) -Q -l $< \
+	--eval '(setq el-sprunge-servername "$(SERVER)")' \
 	--eval '(elnode-start (quote el-sprunge-handler) :port $(PORT))'
 
 clean:
