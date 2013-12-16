@@ -7,6 +7,7 @@
 ;; License: GPLV3 (see the COPYING file in this directory)
 
 ;;; Code:
+(require 'assoc)
 (require 'elnode)
 
 (defvar el-sprunge-servername "localhost"
