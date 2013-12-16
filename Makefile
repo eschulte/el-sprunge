@@ -1,4 +1,5 @@
 EMACS := emacs
+PORT ?= 9090
 
 # Set these environment variables so that they point to the
 # development directories of elnode.
@@ -13,11 +14,11 @@ BATCH_EMACS=$(EMACS) --batch --execute \
 NAME=el-sprunge
 VERSION=0.$(shell date +%Y%m%d)
 DOC="Emacs powered sprunge server"
-REQ=((elnode \"20130416.826\"))
+REQ=((elnode \"20130416.826\") (htmlize \"20130207\"))
 DEFPKG="(define-package \"$(NAME)\" \"$(VERSION)\" \n  \"$(DOC)\" \n  '$(REQ))"
 PACKAGE=$(NAME)-$(VERSION)
 
-.PHONY: all src example package clean check test
+.PHONY: all src start package clean
 
 SRC=$(wildcard *.el)
 
@@ -44,6 +45,10 @@ $(PACKAGE).tar: $(SRC) README.txt
 	rm -r $(PACKAGE)
 
 package: $(PACKAGE).tar
+
+start: $(SRC)
+	$(filter-out --batch, $(BATCH_EMACS)) -Q -l $< \
+	--eval '(elnode-start (quote el-sprunge-handler) :port $(PORT))'
 
 clean:
 	rm -f $(SRC:.el=.elc) $(NAME)-*.tar
