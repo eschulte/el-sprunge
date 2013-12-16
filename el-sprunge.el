@@ -81,7 +81,9 @@ EXAMPLES
                                             el-sprunge-docroot)
             (insert txt))
           (elnode-http-start httpcon "200" '("Content-type" . "text/html"))
-          (elnode-http-return httpcon hash))
+          (elnode-http-return
+           httpcon
+           (format "http://%s/%s\n" el-sprunge-servername hash)))
       (elnode-http-start httpcon "200" '("Content-type" . "text/plain"))
       (elnode-http-return httpcon el-sprunge-usage))))
 
