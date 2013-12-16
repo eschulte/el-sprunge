@@ -9,6 +9,7 @@
 ;;; Code:
 (require 'assoc)
 (require 'elnode)
+(require 'htmlize)
 
 (defvar el-sprunge-servername "localhost"
   "Name of the server.")
@@ -61,16 +62,34 @@ EXAMPLES
     (elnode-docroot-for el-sprunge-docroot :with file :on httpcon :do
       (el-sprunge-serve-file file httpcon))))
 
+(defun el-sprunge-fontify (path as)
+  (let ((new-path (concat (file-name-sans-extension path) "." as)))
+    (if (not (file-exists-p path))
+        new-path
+      (unless (file-exists-p new-path)
+        (with-temp-file new-path
+          (insert-file-contents-literally path)
+          (funcall (intern (concat as "-mode")))
+          (font-lock-fontify-buffer)
+          (insert (prog1 (with-current-buffer (htmlize-buffer) (buffer-string))
+                    (delete-region (point-min) (point-max))))))
+      new-path)))
+
 (defun el-sprunge-serve-file (file httpcon)
-  (let* ((params (elnode-http-params httpcon))
+  (let* ((as (caar (elnode-http-params httpcon)))
          (path (concat file ".txt")))
+    ;; fontification
+    (when (and as (string-match "^[[:alnum:]-_]\+$" as))
+      (setq path (el-sprunge-fontify path as)))
     (cond
      ((string= file el-sprunge-docroot)
       (elnode-http-start httpcon "200" '("Content-type" . "text/plain"))
       (elnode-http-return httpcon el-sprunge-usage))
      ((file-exists-p path)
       (elnode-send-file httpcon path
-                          :mime-types '(("text/plain; charset=utf-8" . "txt"))))
+       :mime-types
+       (append '(("text/plain; charset=utf-8" . "txt"))
+               (when as (list (cons "text/html; charset=utf-8" as))))))
      (:otherwise (elnode-send-404 httpcon)))))
 
 (defun el-sprunge-post-handler (httpcon)
