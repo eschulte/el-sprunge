@@ -70,8 +70,10 @@ EXAMPLES
           (insert-file-contents-literally path)
           (funcall (intern (concat as "-mode")))
           (font-lock-fontify-buffer)
-          (insert (prog1 (with-current-buffer (htmlize-buffer) (buffer-string))
-                    (delete-region (point-min) (point-max))))))
+          (insert (let ((html-buffer (htmlize-buffer)))
+                    (prog1 (with-current-buffer html-buffer (buffer-string))
+                      (kill-buffer html-buffer)
+                      (delete-region (point-min) (point-max)))))))
       new-path)))
 
 (defun el-sprunge-serve-file (file httpcon)
