@@ -1,0 +1,27 @@
+                              el-sprunge
+                command line paste server run in Emacs
+
+Run the server with the following.
+
+    make start
+
+Optionally set the server name and port using environment variables.
+
+    make start PORT=9090 SERVER=localhost
+
+Optionally specify an Emacs color theme.  To ensure the theme works it
+may be necessary to explicitly set the TERM environment variable.
+
+    make start PORT=9090 SERVER=localhost THEME=tango TERM=xterm-256color
+
+The `el-sprunge-after-save-hook' may be used to run actions on every
+pasted file.  For example evaluating the following in the Emacs server
+will add every new paste to a git repository `el-sprunge-docroot'.
+
+    (require 'vc)
+    (defun el-sprunge-vc-add ()
+      (ignore-errors
+        (let ((file (buffer-file-name (current-buffer))))
+          (unless (vc-backend file) (vc-register))
+          (vc-checkin (list file) (vc-backend file) nil "a paste"))))
+    (add-hook 'el-sprunge-after-save-hook 'el-sprunge-vc-add)
