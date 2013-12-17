@@ -33,10 +33,10 @@
   (elnode-http-start httpcon "200" '("Content-type" . "text/plain"))
   (elnode-http-return httpcon
                       (format "NAME
-    el-sprunge: sprunge-style paste server
+    el-sprunge: sprunge-style command line paste server
 
 SYNOPSIS
-    <command> | curl -F 'sprunge=<-' %s
+    <command> | curl -s -F 'sprunge=<-' %s
 
 DESCRIPTION
     Idea and this page blatently copied from http://sprunge.us. 
