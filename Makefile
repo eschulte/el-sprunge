@@ -2,14 +2,17 @@ EMACS := emacs
 PORT ?= 9090
 SERVER ?= localhost
 
-# Set these environment variables so that they point to the
-# development directories of elnode.
+# Set this environment variable to point to your ELPA packages.
 ELPADIR ?= ~/.emacs.d/elpa/
 
 BATCH_EMACS=$(EMACS) --batch --execute \
    '(mapc (lambda (dir) (add-to-list (quote load-path) dir)) \
      `(,@(mapcar (lambda (p) (expand-file-name p "$(ELPADIR)")) \
                  (directory-files "$(ELPADIR)"))))'
+
+ifneq ($(THEME),)
+SET_THEME=--eval '(load-theme (quote $(THEME)) t)'
+endif
 
 # Package variables
 NAME=el-sprunge
@@ -49,6 +52,7 @@ package: $(PACKAGE).tar
 
 start: $(SRC)
 	$(filter-out --batch, $(BATCH_EMACS)) -Q -l $< \
+	$(SET_THEME) \
 	--eval '(setq el-sprunge-servername "$(SERVER)")' \
 	--eval '(elnode-start (quote el-sprunge-handler) :port $(PORT))'
 
