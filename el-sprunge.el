@@ -20,12 +20,8 @@
   (expand-file-name "scraps" elnode-config-directory)
   "Document root from which to serve Org-mode files.")
 
-(defvar el-sprunge-before-save-hook nil
-  "Hook run in a file buffer before saving web edits.
-If any function in this hook returns nil then the edit is aborted.")
-
 (defvar el-sprunge-after-save-hook nil
-  "Hook run in a file buffer after saving web edits.")
+  "Hook run in a file buffer after saving a new post.")
 
 (defun el-sprunge-handler (httpcon)
   (elnode-log-access "el-sprunge" httpcon)
@@ -95,10 +91,14 @@ EXAMPLES
 (defun el-sprunge-post-handler (httpcon)
   (let ((txt (cdr (assoc "sprunge" (elnode-http-params httpcon)))))
     (if txt
-        (let ((hash (substring (sha1 txt) 0 6)))
-          (with-temp-file (expand-file-name (concat hash ".txt")
-                                            el-sprunge-docroot)
-            (insert txt))
+        (let* ((hash (substring (sha1 txt) 0 6))
+               (path (expand-file-name (concat hash ".txt")
+                                       el-sprunge-docroot)))
+          (with-temp-file path (insert txt))
+          (when el-sprunge-after-save-hook
+            (find-file-literally path)
+            (run-hooks 'el-sprunge-after-save-hook)
+            (kill-buffer))
           (elnode-http-start httpcon "200" '("Content-type" . "text/html"))
           (elnode-http-return
            httpcon
