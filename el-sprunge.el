@@ -58,7 +58,8 @@ EXAMPLES
       (el-sprunge-serve-file file httpcon))))
 
 (defun el-sprunge-fontify (path as)
-  (let ((new-path (concat (file-name-sans-extension path) "." as)))
+  (let ((new-path (concat (file-name-sans-extension path) "." as))
+        (enable-local-variables nil))
     (if (not (file-exists-p path))
         new-path
       (unless (file-exists-p new-path)
