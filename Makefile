@@ -18,7 +18,7 @@ endif
 NAME=el-sprunge
 VERSION=0.$(shell date +%Y%m%d)
 DOC="Emacs powered sprunge server"
-REQ=((elnode \"20130416.826\") (htmlize \"20130207\"))
+REQ=((emacs-web-server \"20130416.826\") (htmlize \"20130207\"))
 DEFPKG="(define-package \"$(NAME)\" \"$(VERSION)\" \n  \"$(DOC)\" \n  '$(REQ))"
 PACKAGE=$(NAME)-$(VERSION)
 
@@ -54,7 +54,7 @@ start: $(SRC)
 	$(filter-out --batch, $(BATCH_EMACS)) -Q -l $< \
 	$(SET_THEME) \
 	--eval '(setq el-sprunge-servername "$(SERVER)")' \
-	--eval '(elnode-start (quote el-sprunge-handler) :port $(PORT))'
+	--eval '(ews-start el-sprunge-handler $(PORT))'
 
 clean:
 	rm -f $(SRC:.el=.elc) $(NAME)-*.tar

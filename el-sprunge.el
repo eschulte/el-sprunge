@@ -7,9 +7,9 @@
 ;; License: GPLV3 (see the COPYING file in this directory)
 
 ;;; Code:
-(require 'assoc)
-(require 'elnode)
+(require 'emacs-web-server)
 (require 'htmlize)
+(require 'cl-lib)
 
 (defcustom el-sprunge-servername "localhost"
   "Name of the server."
@@ -17,22 +17,23 @@
   :type 'string)
 
 (defvar el-sprunge-docroot
-  (expand-file-name "scraps" elnode-config-directory)
+  (expand-file-name "scraps" (file-name-directory
+                              (or load-file-name (buffer-file-name))))
   "Document root from which to serve Org-mode files.")
 
 (defvar el-sprunge-after-save-hook nil
   "Hook run in a file buffer after saving a new post.")
 
-(defun el-sprunge-handler (httpcon)
-  (elnode-log-access "el-sprunge" httpcon)
-  (elnode-method httpcon
-    (GET  (el-sprunge-file-handler httpcon))
-    (POST (el-sprunge-post-handler httpcon))))
+(defvar el-sprunge-handler
+  '(((:GET  . "^/$") . el-sprunge-send-usage)
+    ((:GET  . ".*")  . el-sprunge-file-handler)
+    ((:POST . ".*")  . el-sprunge-post-handler)))
 
-(defun el-sprunge-send-usage ()
-  (elnode-http-start httpcon "200" '("Content-type" . "text/plain"))
-  (elnode-http-return httpcon
-                      (format "NAME
+(defun el-sprunge-send-usage (proc request)
+  (ews-response-header proc 200
+    '("Content-type" . "text/plain; charset=utf-8"))
+  (process-send-string proc
+    (format "NAME
     el-sprunge: sprunge-style command line paste server
 
 SYNOPSIS
@@ -47,15 +48,32 @@ EXAMPLES
        http://%s/a9e4e6
     ~$ firefox http://%s/a9e4e6
 "
-                              el-sprunge-servername
-                              el-sprunge-servername
-                              el-sprunge-servername
-                              el-sprunge-servername)))
+            el-sprunge-servername
+            el-sprunge-servername
+            el-sprunge-servername
+            el-sprunge-servername))
+  :finished)
 
-(defun el-sprunge-file-handler (httpcon)
-  (let ((elnode-docroot-for-no-404 t) (elnode-docroot-for-no-cache t))
-    (elnode-docroot-for el-sprunge-docroot :with file :on httpcon :do
-      (el-sprunge-serve-file file httpcon))))
+(defun el-sprunge-subdirectory-p (parent dir)
+  (let* ((expanded (expand-file-name dir))
+         (complete (if (string= (substring expanded -1) "/")
+                       expanded
+                     (concat expanded "/"))))
+    (and (>= (length complete) (length parent))
+         (string= parent (substring complete 0 (length parent)))
+         complete)))
+
+(defun el-sprunge-404 (proc)
+  (ews-response-header proc 404
+    '("Content-type" . "text/plain"))
+  (process-send-string proc "404 not found")
+  :finished)
+
+(defun el-sprunge-file-handler (proc request)
+  (let ((path (concat el-sprunge-docroot (cdr (assoc :GET request)))))
+    (if (el-sprunge-subdirectory-p el-sprunge-docroot path)
+        (el-sprunge-serve-file path proc request)
+      (el-sprunge-404 proc))))
 
 (defun el-sprunge-fontify (path as)
   (let ((new-path (concat (file-name-sans-extension path) "." as))
@@ -73,24 +91,30 @@ EXAMPLES
                       (delete-region (point-min) (point-max)))))))
       new-path)))
 
-(defun el-sprunge-serve-file (file httpcon)
-  (let* ((as (caar (elnode-http-params httpcon)))
-         (path (concat file ".txt")))
+(defun el-sprunge-serve-file (uri proc request)
+  (let (path as)
+    (when (string-match "?" uri)
+      (setq path (substring uri 0 (match-beginning 0))
+            as   (substring uri (match-end 0))))
+    (setq path (concat path ".txt"))
     ;; fontification
     (when (and as (string-match "^[[:alnum:]-_]\+$" as))
       (setq path (el-sprunge-fontify path as)))
     (cond
-     ((string= file el-sprunge-docroot)
-      (el-sprunge-send-usage))
      ((file-exists-p path)
-      (elnode-send-file httpcon path
-       :mime-types
-       (append '(("text/plain; charset=utf-8" . "txt"))
-               (when as (list (cons "text/html; charset=utf-8" as))))))
-     (:otherwise (elnode-send-404 httpcon)))))
+      (ews-response-header proc 200
+        '("Content-type" . (if as
+                               "text/html; charset=utf-8"
+                             "text/plain; charset=utf-8")))
+      (process-send-string proc
+        (with-temp-buffer
+          (insert-file-contents-literally path)
+          (buffer-string))))
+     (:otherwise (el-sprunge-404 proc)))
+    :finished))
 
-(defun el-sprunge-post-handler (httpcon)
-  (let ((txt (cdr (assoc "sprunge" (elnode-http-params httpcon)))))
+(defun el-sprunge-post-handler (proc request)
+  (let ((txt (cdr (assoc 'content (cdr (assoc "sprunge" request))))))
     (if txt
         (let* ((hash (substring (sha1 txt) 0 6))
                (path (expand-file-name (concat hash ".txt")
@@ -100,11 +124,11 @@ EXAMPLES
             (find-file-literally path)
             (run-hooks 'el-sprunge-after-save-hook)
             (kill-buffer))
-          (elnode-http-start httpcon "200" '("Content-type" . "text/html"))
-          (elnode-http-return
-           httpcon
-           (format "http://%s/%s\n" el-sprunge-servername hash)))
-      (el-sprunge-send-usage))))
+          (ews-response-header proc 200 '("Content-type" . "text/plain;"))
+          (process-send-string proc
+            (format "http://%s/%s\n" el-sprunge-servername hash))
+          :finished)
+      (el-sprunge-send-usage proc request))))
 
 (provide 'el-sprunge)
 ;;; el-sprunge.el ends here
