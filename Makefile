@@ -2,7 +2,7 @@ EMACS := emacs
 PORT ?= 9090
 SERVER ?= localhost
 
-BATCH_EMACS=$(EMACS) --batch
+BATCH_EMACS=$(EMACS) --batch --execute '(add-to-list (quote load-path) "$(shell pwd)")'
 
 ifneq ($(THEME),)
 SET_THEME=--eval '(load-theme (quote $(THEME)) t)'
