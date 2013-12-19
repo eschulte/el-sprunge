@@ -51,8 +51,7 @@ EXAMPLES
             el-sprunge-servername
             el-sprunge-servername
             el-sprunge-servername
-            el-sprunge-servername))
-  :finished)
+            el-sprunge-servername)))
 
 (defun el-sprunge-subdirectory-p (parent dir)
   (let* ((expanded (expand-file-name dir))
@@ -104,11 +103,10 @@ EXAMPLES
         (with-temp-buffer
           (insert-file-contents-literally path)
           (buffer-string))))
-     (:otherwise (ews-send-404 proc)))
-    :finished))
+     (:otherwise (ews-send-404 proc)))))
 
 (defun el-sprunge-post-handler (proc request)
-  (let ((txt (cdr (assoc 'content (cdr (assoc "sprunge" request))))))
+  (let ((txt (cdr (assoc "sprunge" request))))
     (if txt
         (let* ((hash (substring (sha1 txt) 0 6))
                (path (expand-file-name (concat hash ".txt")
@@ -120,8 +118,7 @@ EXAMPLES
             (kill-buffer))
           (ews-response-header proc 200 '("Content-type" . "text/plain;"))
           (process-send-string proc
-            (format "http://%s/%s\n" el-sprunge-servername hash))
-          :finished)
+            (format "http://%s/%s\n" el-sprunge-servername hash)))
       (el-sprunge-send-usage proc request))))
 
 (provide 'el-sprunge)
