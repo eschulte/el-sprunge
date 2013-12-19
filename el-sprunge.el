@@ -40,7 +40,7 @@ SYNOPSIS
     <command> | curl -s -F 'sprunge=<-' %s
 
 DESCRIPTION
-    Idea and this page blatently copied from http://sprunge.us. 
+    Idea and this page blatently copied from http://sprunge.us.
     Server re-implemented in Emacs.
 
 EXAMPLES
@@ -72,7 +72,7 @@ EXAMPLES
 (defun el-sprunge-file-handler (proc request)
   (let ((path (concat el-sprunge-docroot (cdr (assoc :GET request)))))
     (if (el-sprunge-subdirectory-p el-sprunge-docroot path)
-        (el-sprunge-serve-file path proc request)
+        (el-sprunge-serve-file (expand-file-name path) proc request)
       (el-sprunge-404 proc))))
 
 (defun el-sprunge-fontify (path as)
@@ -92,7 +92,7 @@ EXAMPLES
       new-path)))
 
 (defun el-sprunge-serve-file (uri proc request)
-  (let (path as)
+  (let ((path uri) as)
     (when (string-match "?" uri)
       (setq path (substring uri 0 (match-beginning 0))
             as   (substring uri (match-end 0))))
@@ -103,9 +103,9 @@ EXAMPLES
     (cond
      ((file-exists-p path)
       (ews-response-header proc 200
-        '("Content-type" . (if as
-                               "text/html; charset=utf-8"
-                             "text/plain; charset=utf-8")))
+        (cons "Content-type" (if as
+                                 "text/html; charset=utf-8"
+                               "text/plain; charset=utf-8")))
       (process-send-string proc
         (with-temp-buffer
           (insert-file-contents-literally path)
