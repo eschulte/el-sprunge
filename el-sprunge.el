@@ -95,14 +95,9 @@ EXAMPLES
       (setq path (el-sprunge-fontify path as)))
     (cond
      ((file-exists-p path)
-      (ews-response-header proc 200
-        (cons "Content-type" (if as
-                                 "text/html; charset=utf-8"
-                               "text/plain; charset=utf-8")))
-      (process-send-string proc
-        (with-temp-buffer
-          (insert-file-contents-literally path)
-          (buffer-string))))
+      (ews-send-file proc path (if as
+                                   "text/html; charset=utf-8"
+                                 "text/plain; charset=utf-8")))
      (:otherwise (ews-send-404 proc)))))
 
 (defun el-sprunge-post-handler (proc request)
