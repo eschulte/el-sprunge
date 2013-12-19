@@ -1,8 +1,14 @@
 EMACS := emacs
 PORT ?= 9090
 SERVER ?= localhost
+SRCDIR ?= ~/.emacs.d/elpa/
 
-BATCH_EMACS=$(EMACS) --batch --execute '(add-to-list (quote load-path) "$(shell pwd)")'
+BATCH_EMACS=$(EMACS) --batch \
+	--execute '(add-to-list (quote load-path) "$(shell pwd)")' \
+	--execute \
+   '(mapc (lambda (dir) (add-to-list (quote load-path) dir)) \
+     `(,@(mapcar (lambda (p) (expand-file-name p "$(SRCDIR)")) \
+                 (directory-files "$(SRCDIR)"))))'
 
 ifneq ($(THEME),)
 SET_THEME=--eval '(load-theme (quote $(THEME)) t)'
