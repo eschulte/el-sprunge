@@ -14,6 +14,10 @@ ifneq ($(THEME),)
 SET_THEME=--eval '(load-theme (quote $(THEME)) t)'
 endif
 
+ifneq ($(DOCROOT),)
+SET_DOCROOT=--eval '(setq el-sprunge-docroot "$(DOCROOT)")'
+endif
+
 # Package variables
 NAME=el-sprunge
 VERSION=0.$(shell date +%Y%m%d)
@@ -52,7 +56,7 @@ package: $(PACKAGE).tar
 
 start: $(SRC)
 	$(filter-out --batch, $(BATCH_EMACS)) -Q -l $< \
-	$(SET_THEME) \
+	$(SET_THEME) $(SET_DOCROOT) \
 	--eval '(setq el-sprunge-servername "$(SERVER)")' \
 	--eval '(ews-start el-sprunge-handler $(PORT))'
 
