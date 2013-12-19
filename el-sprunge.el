@@ -63,17 +63,11 @@ EXAMPLES
          (string= parent (substring complete 0 (length parent)))
          complete)))
 
-(defun el-sprunge-404 (proc)
-  (ews-response-header proc 404
-    '("Content-type" . "text/plain"))
-  (process-send-string proc "404 not found")
-  :finished)
-
 (defun el-sprunge-file-handler (proc request)
   (let ((path (concat el-sprunge-docroot (cdr (assoc :GET request)))))
     (if (el-sprunge-subdirectory-p el-sprunge-docroot path)
         (el-sprunge-serve-file (expand-file-name path) proc request)
-      (el-sprunge-404 proc))))
+      (ews-send-404 proc))))
 
 (defun el-sprunge-fontify (path as)
   (let ((new-path (concat (file-name-sans-extension path) "." as))
@@ -110,7 +104,7 @@ EXAMPLES
         (with-temp-buffer
           (insert-file-contents-literally path)
           (buffer-string))))
-     (:otherwise (el-sprunge-404 proc)))
+     (:otherwise (ews-send-404 proc)))
     :finished))
 
 (defun el-sprunge-post-handler (proc request)
