@@ -5,18 +5,20 @@ Run the server with the following.
 
     make start
 
-Optionally set the server name and port using environment variables.
+Optionally set a number of properties of the server through
+environment variables passed to make.
 
-    make start PORT=9090 SERVER=localhost
+The following environment variables are recognized.
 
-Optionally specify an Emacs color theme.  To ensure the theme works it
-may be necessary to explicitly set the TERM environment variable.
-
-    make start PORT=9090 SERVER=localhost THEME=tango TERM=xterm-256color
+    EMACS ---- change the Emacs executable used to run the server
+    PORT ----- port on which the server will listen for connections
+    SERVER --- server name
+    THEME ---- Emacs color theme used for fontified pastes
+    DOCROOT -- directory in which to store pastes
 
 The `el-sprunge-after-save-hook' may be used to run actions on every
-pasted file.  For example evaluating the following in the Emacs server
-will add every new paste to a git repository `el-sprunge-docroot'.
+pasted file.  For example evaluating the following in the running
+Emacs server commits every new paste to a version control repository.
 
     (require 'vc)
     (defun el-sprunge-vc-add ()

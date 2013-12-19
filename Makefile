@@ -2,13 +2,7 @@ EMACS := emacs
 PORT ?= 9090
 SERVER ?= localhost
 
-# Set this environment variable to point to your ELPA packages.
-ELPADIR ?= ~/.emacs.d/elpa/
-
-BATCH_EMACS=$(EMACS) --batch --execute \
-   '(mapc (lambda (dir) (add-to-list (quote load-path) dir)) \
-     `(,@(mapcar (lambda (p) (expand-file-name p "$(ELPADIR)")) \
-                 (directory-files "$(ELPADIR)"))))'
+BATCH_EMACS=$(EMACS) --batch
 
 ifneq ($(THEME),)
 SET_THEME=--eval '(load-theme (quote $(THEME)) t)'
