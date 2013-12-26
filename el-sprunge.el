@@ -29,11 +29,12 @@
     ((:GET  . ".*")  . el-sprunge-file-handler)
     ((:POST . ".*")  . el-sprunge-post-handler)))
 
-(defun el-sprunge-send-usage (proc request)
-  (ews-response-header proc 200
-    '("Content-type" . "text/plain; charset=utf-8"))
-  (process-send-string proc
-    (format "NAME
+(defun el-sprunge-send-usage (request)
+  (with-slots (process) request
+    (ews-response-header process 200
+      '("Content-type" . "text/plain; charset=utf-8"))
+    (process-send-string process
+      (format "NAME
     el-sprunge: sprunge-style command line paste server
 
 SYNOPSIS
@@ -48,25 +49,17 @@ EXAMPLES
        http://%s/a9e4e6
     ~$ firefox http://%s/a9e4e6
 "
-            el-sprunge-servername
-            el-sprunge-servername
-            el-sprunge-servername
-            el-sprunge-servername)))
+              el-sprunge-servername
+              el-sprunge-servername
+              el-sprunge-servername
+              el-sprunge-servername))))
 
-(defun el-sprunge-subdirectory-p (parent dir)
-  (let* ((expanded (expand-file-name dir))
-         (complete (if (string= (substring expanded -1) "/")
-                       expanded
-                     (concat expanded "/"))))
-    (and (>= (length complete) (length parent))
-         (string= parent (substring complete 0 (length parent)))
-         complete)))
-
-(defun el-sprunge-file-handler (proc request)
-  (let ((path (concat el-sprunge-docroot (cdr (assoc :GET request)))))
-    (if (el-sprunge-subdirectory-p el-sprunge-docroot path)
-        (el-sprunge-serve-file (expand-file-name path) proc request)
-      (ews-send-404 proc))))
+(defun el-sprunge-file-handler (request)
+  (with-slots (process headers) request
+    (let ((path (concat el-sprunge-docroot (cdr (assoc :GET headers)))))
+      (if (ews-subdirectoryp el-sprunge-docroot path)
+          (el-sprunge-serve-file (expand-file-name path) request)
+        (ews-send-404 process)))))
 
 (defun el-sprunge-fontify (path as)
   (let ((new-path (concat (file-name-sans-extension path) "." as))
@@ -84,37 +77,36 @@ EXAMPLES
                       (delete-region (point-min) (point-max)))))))
       new-path)))
 
-(defun el-sprunge-serve-file (uri proc request)
-  (let ((path uri) as)
-    (when (string-match "?" uri)
-      (setq path (substring uri 0 (match-beginning 0))
-            as   (substring uri (match-end 0))))
-    (setq path (concat path ".txt"))
-    ;; fontification
-    (when (and as (string-match "^[[:alnum:]-_]\+$" as))
-      (setq path (el-sprunge-fontify path as)))
-    (cond
-     ((file-exists-p path)
-      (ews-send-file proc path (if as
-                                   "text/html; charset=utf-8"
-                                 "text/plain; charset=utf-8")))
-     (:otherwise (ews-send-404 proc)))))
+(defun el-sprunge-serve-file (path request)
+  (with-slots (process headers) request
+    (let ((as (car (cl-assoc-if #'stringp headers))))
+      (setq path (concat path ".txt"))
+      ;; fontification
+      (when (and as (string-match "^[[:alnum:]-_]\+$" as))
+        (setq path (el-sprunge-fontify path as)))
+      (cond
+       ((file-exists-p path)
+        (ews-send-file process path (if as
+                                        "text/html; charset=utf-8"
+                                      "text/plain; charset=utf-8")))
+       (:otherwise (ews-send-404 process))))))
 
-(defun el-sprunge-post-handler (proc request)
-  (let ((txt (cdr (assoc "sprunge" request))))
-    (if txt
-        (let* ((hash (substring (sha1 txt) 0 6))
-               (path (expand-file-name (concat hash ".txt")
-                                       el-sprunge-docroot)))
-          (with-temp-file path (insert txt))
-          (when el-sprunge-after-save-hook
-            (find-file-literally path)
-            (run-hooks 'el-sprunge-after-save-hook)
-            (kill-buffer))
-          (ews-response-header proc 200 '("Content-type" . "text/plain;"))
-          (process-send-string proc
-            (format "http://%s/%s\n" el-sprunge-servername hash)))
-      (el-sprunge-send-usage proc request))))
+(defun el-sprunge-post-handler (request)
+  (with-slots (process headers) request
+    (let ((txt (cdr (assoc "sprunge" headers))))
+      (if txt
+          (let* ((hash (substring (sha1 txt) 0 6))
+                 (path (expand-file-name (concat hash ".txt")
+                                         el-sprunge-docroot)))
+            (with-temp-file path (insert txt))
+            (when el-sprunge-after-save-hook
+              (find-file-literally path)
+              (run-hooks 'el-sprunge-after-save-hook)
+              (kill-buffer))
+            (ews-response-header process 200 '("Content-type" . "text/plain;"))
+            (process-send-string process
+              (format "http://%s/%s\n" el-sprunge-servername hash)))
+        (el-sprunge-send-usage request)))))
 
 (provide 'el-sprunge)
 ;;; el-sprunge.el ends here
