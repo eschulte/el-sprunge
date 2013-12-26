@@ -57,7 +57,7 @@ EXAMPLES
 (defun el-sprunge-file-handler (request)
   (with-slots (process headers) request
     (let ((path (concat el-sprunge-docroot (cdr (assoc :GET headers)))))
-      (if (ews-subdirectoryp el-sprunge-docroot path)
+      (if (ews-in-directory-p el-sprunge-docroot path)
           (el-sprunge-serve-file (expand-file-name path) request)
         (ews-send-404 process)))))
 
