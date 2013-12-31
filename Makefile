@@ -22,7 +22,7 @@ endif
 NAME=el-sprunge
 VERSION=0.$(shell date +%Y%m%d)
 DOC="Emacs powered sprunge server"
-REQ=((emacs-web-server \"20130416.826\") (htmlize \"20130207\"))
+REQ=((web-server \"20130416.826\") (htmlize \"20130207\"))
 DEFPKG="(define-package \"$(NAME)\" \"$(VERSION)\" \n  \"$(DOC)\" \n  '$(REQ))"
 PACKAGE=$(NAME)-$(VERSION)
 

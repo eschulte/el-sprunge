@@ -7,7 +7,7 @@
 ;; License: GPLV3 (see the COPYING file in this directory)
 
 ;;; Code:
-(require 'emacs-web-server)
+(require 'web-server)
 (require 'htmlize)
 (require 'cl-lib)
 
