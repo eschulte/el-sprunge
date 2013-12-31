@@ -31,7 +31,7 @@
 
 (defun el-sprunge-send-usage (request)
   (with-slots (process) request
-    (ews-response-header process 200
+    (ws-response-header process 200
       '("Content-type" . "text/plain; charset=utf-8"))
     (process-send-string process
       (format "NAME
@@ -57,9 +57,9 @@ EXAMPLES
 (defun el-sprunge-file-handler (request)
   (with-slots (process headers) request
     (let ((path (concat el-sprunge-docroot (cdr (assoc :GET headers)))))
-      (if (ews-in-directory-p el-sprunge-docroot path)
+      (if (ws-in-directory-p el-sprunge-docroot path)
           (el-sprunge-serve-file (expand-file-name path) request)
-        (ews-send-404 process)))))
+        (ws-send-404 process)))))
 
 (defun el-sprunge-fontify (path as)
   (let ((new-path (concat (file-name-sans-extension path) "." as))
@@ -86,10 +86,10 @@ EXAMPLES
         (setq path (el-sprunge-fontify path as)))
       (cond
        ((file-exists-p path)
-        (ews-send-file process path (if as
+        (ws-send-file process path (if as
                                         "text/html; charset=utf-8"
                                       "text/plain; charset=utf-8")))
-       (:otherwise (ews-send-404 process))))))
+       (:otherwise (ws-send-404 process))))))
 
 (defun el-sprunge-post-handler (request)
   (with-slots (process headers) request
@@ -103,7 +103,7 @@ EXAMPLES
               (find-file-literally path)
               (run-hooks 'el-sprunge-after-save-hook)
               (kill-buffer))
-            (ews-response-header process 200 '("Content-type" . "text/plain;"))
+            (ws-response-header process 200 '("Content-type" . "text/plain;"))
             (process-send-string process
               (format "http://%s/%s\n" el-sprunge-servername hash)))
         (el-sprunge-send-usage request)))))

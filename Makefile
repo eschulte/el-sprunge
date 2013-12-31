@@ -58,7 +58,7 @@ start: $(SRC)
 	$(filter-out --batch, $(BATCH_EMACS)) -Q -l $< \
 	$(SET_THEME) $(SET_DOCROOT) \
 	--eval '(setq el-sprunge-servername "$(SERVER)")' \
-	--eval '(ews-start el-sprunge-handler $(PORT))'
+	--eval '(ws-start el-sprunge-handler $(PORT))'
 
 clean:
 	rm -f $(SRC:.el=.elc) $(NAME)-*.tar
