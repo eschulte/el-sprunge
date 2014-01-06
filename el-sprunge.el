@@ -93,7 +93,7 @@ EXAMPLES
 
 (defun el-sprunge-post-handler (request)
   (with-slots (process headers) request
-    (let ((txt (cdr (assoc "sprunge" headers))))
+    (let ((txt (cdr (assoc 'content (cdr (assoc "sprunge" headers))))))
       (if txt
           (let* ((hash (substring (sha1 txt) 0 6))
                  (path (expand-file-name (concat hash ".txt")
