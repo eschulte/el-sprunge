@@ -1,5 +1,5 @@
                               el-sprunge
-                command line paste server run in Emacs
+          command line paste server with Emacs highlighting
 
 Run the server with the following.
 
