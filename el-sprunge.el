@@ -73,7 +73,7 @@ DESCRIPTION
     Server re-implemented in Emacs.
 
 EXAMPLES
-    ~$ cat bin/ching | curl -s -F 'sprunge=<-' %s
+    ~$ date | curl -s -F 'sprunge=<-' %s
        http://%s/a9e4e6
     ~$ firefox http://%s/a9e4e6
 "
