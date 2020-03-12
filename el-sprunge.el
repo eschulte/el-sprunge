@@ -126,7 +126,8 @@ EXAMPLES
           (let* ((hash (substring (sha1 txt) 0 6))
                  (path (expand-file-name (concat hash ".txt")
                                          el-sprunge-docroot)))
-            (with-temp-file path (insert txt))
+            (let ((coding-system-for-write 'raw-text))
+              (with-temp-file path (insert txt)))
             (when el-sprunge-after-save-hook
               (find-file-literally path)
               (run-hooks 'el-sprunge-after-save-hook)
