@@ -95,14 +95,15 @@ EXAMPLES
     (if (not (file-exists-p path))
         new-path
       (unless (file-exists-p new-path)
-        (with-temp-file new-path
-          (insert-file-contents-literally path)
-          (funcall (intern (concat as "-mode")))
-          (font-lock-fontify-buffer)
-          (insert (let ((html-buffer (htmlize-buffer)))
-                    (prog1 (with-current-buffer html-buffer (buffer-string))
-                      (kill-buffer html-buffer)
-                      (delete-region (point-min) (point-max)))))))
+        (let ((coding-system-for-write 'raw-text))
+          (with-temp-file new-path
+            (insert-file-contents-literally path)
+            (funcall (intern (concat as "-mode")))
+            (font-lock-ensure)
+            (insert (let ((html-buffer (htmlize-buffer)))
+                      (prog1 (with-current-buffer html-buffer (buffer-string))
+                        (kill-buffer html-buffer)
+                        (delete-region (point-min) (point-max))))))))
       new-path)))
 
 (defun el-sprunge-serve-file (path request)
